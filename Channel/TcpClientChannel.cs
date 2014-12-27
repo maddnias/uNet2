@@ -179,7 +179,7 @@ namespace uNet2.Channel
             buffObj.ReadLen = ChannelSocket.EndReceive(res);
             buffObj.TotalRead += buffObj.ReadLen;
 
-            buffObj.CompleteBuff.AddRange(buffObj.RecBuff.Slice(0, buffObj.ReadLen));
+            buffObj.CompleteBuff.AddRange(buffObj.RecBuff.FastSlice(0, buffObj.ReadLen));
             if (buffObj.CompleteBuff.Count < buffObj.PacketSize)
             {
                 // keep reading

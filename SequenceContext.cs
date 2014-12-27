@@ -13,7 +13,7 @@ namespace uNet2
     {
         public Guid SequenceGuid { get; set; }
         internal SequenceInitPacket InitPacket { get; set; }
-        internal List<ISequencePacket> SequencePackets { get; set; }
+        internal ISequencePacket[] SequencePackets { get; set; }
         internal byte[] InitPacketBuffer { get; set; }
         internal List<byte[]> SequencePacketBuffers { get; set; }
 
@@ -23,7 +23,7 @@ namespace uNet2
             SequencePacketBuffers = sequencePacketBuffers;
         }
 
-        internal SequenceContext(SequenceInitPacket initPacket, List<ISequencePacket> sequencePackets,
+        internal SequenceContext(SequenceInitPacket initPacket, ISequencePacket[] sequencePackets,
             byte[] initPacketBuffer, List<byte[]> sequencePacketBuffers)
         {
             InitPacket = initPacket;
@@ -41,23 +41,25 @@ namespace uNet2
             var completeBuff = ms.ToArray();
 
             Guid seqGuid;
-            var sequence = new SequenceHandler().CreateSequence(data, completeBuff, fragmentSize, out initPacket, out seqGuid).ToList();
+            var sequence = new SequenceHandler().CreateSequence(data, completeBuff, fragmentSize, out initPacket,
+                out seqGuid);
             var initPacketStream = new MemoryStream();
-            var sequenceStreams = new MemoryStream[sequence.Count];
-            var sequenceBuffs = new List<byte[]>();
+
 
             initPacket.SerializeTo(initPacketStream);
 
 #if DEBUG
-            for (var i = 0; i < sequence.Count; i++)
-            {
-                var seq = sequence[i];
-                sequenceStreams[i] = new MemoryStream();
-                seq.SerializeTo(sequenceStreams[i]);
-                sequenceBuffs.Add(sequenceStreams[i].ToArray());
-            }
+          //  var sequenceStreams = new MemoryStream[sequence.Length];
+          //  var sequenceBuffs = new List<byte[]>();
+            //for (var i = 0; i < sequence.Count; i++)
+            //{
+            //    var seq = sequence[i];
+            //    sequenceStreams[i] = new MemoryStream();
+            //    seq.SerializeTo(sequenceStreams[i]);
+            //    sequenceBuffs.Add(sequenceStreams[i].ToArray());
+            //}
 #endif
-            var seqCtx = new SequenceContext(initPacket, sequence, initPacketStream.ToArray(), sequenceBuffs)
+            var seqCtx = new SequenceContext(initPacket, sequence, initPacketStream.ToArray(), null)
             {
                 SequenceGuid = seqGuid
             };

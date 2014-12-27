@@ -24,7 +24,7 @@ namespace uNet2.Packet
             bw.Write(SeqIdx);
             bw.Write(IsLast);
             bw.Write(SeqSize);
-            bw.Write(SeqBuffer.Slice(0, SeqSize));
+            bw.Write(SeqBuffer.FastSlice(0, SeqSize));
         }
 
         public void DeserializeFrom(Stream stream)

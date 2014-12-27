@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -29,64 +30,64 @@ namespace uNet2.Peer
         }
 
         //TODO: optimize this
-        public List<ISequencePacket> CreateSequence(IDataPacket packet, byte[] completeBuff, int buffSize,
+        public ISequencePacket[] CreateSequence(IDataPacket packet, byte[] completeBuff, int buffSize,
             out SequenceInitPacket initPacket, out Guid seqGuid)
         {
             //  if (!IsSequenceRequired(buffSize, completeBuff.Length))
             //TODO: do proper shit..
             // throw new Exception();
 
-            var padCounter = 0;
-            // -29 for SequencePacket overhead size
-            while ((completeBuff.Length + padCounter)%(buffSize-33) != 0)
-                padCounter++;
-
-            var newSize = completeBuff.Length + padCounter;
-            var newBuff = new byte[newSize];
-            Buffer.BlockCopy(completeBuff, 4, newBuff, 0, completeBuff.Length -4);
-
-            var outList = CreateSequence(newBuff, (buffSize-33), completeBuff.Length).ToList();
+            var modRest = completeBuff.Length%(buffSize-33);
+            var outList = CreateSequence(completeBuff, buffSize - 33, modRest, completeBuff.Length).ToArray();
             var curSeqGuid = seqGuid = SocketIdentity.GenerateGuid();
             initPacket = new SequenceInitPacket
             {
-                PartsCount = outList.Count,
+                PartsCount = outList.Length,
                 SequenceGuid = seqGuid,
                 FullSequenceSize = completeBuff.Length
             };
-            outList.ForEach(seq => seq.SeqGuid = curSeqGuid);
-            return outList;
+            for (var i = 0; i < outList.Length; i++)
+                outList[i].SeqGuid = curSeqGuid;
+            return outList.ToArray();
         }
 
         public static byte[] AssembleSequence(IList<ISequencePacket> packets)
         {
             var fullBuff = new byte[packets.Sum(p => p.SeqSize) - 4];
-            packets = packets.OrderBy(p => p.SeqIdx).ToList();
+#if DEBUG
+            Debug.Assert(packets.OrderBy(p => p.SeqIdx).ToList().SequenceEqual(packets));
+#endif
             var offset = 0;
             foreach (var packet in packets)
             {
-                Buffer.BlockCopy(packet.SeqBuffer, 0, fullBuff, offset,
-                    (packet.IsLast ? packet.SeqSize - 4 : packet.SeqSize));
+                Buffer.BlockCopy(packet.SeqBuffer, (packet.SeqIdx == 0 ? 4 : 0), fullBuff, offset,
+                    (packet.IsLast ? packet.SeqSize - 4 : (packet.SeqIdx == 0 ? packet.SeqSize - 4 : packet.SeqSize)));
                 offset += packet.SeqSize;
             }
             return fullBuff;
         }
 
-        private static IEnumerable<ISequencePacket> CreateSequence(byte[] newBuff, int buffSize, int origSize)
+        private static IEnumerable<ISequencePacket> CreateSequence(byte[] newBuff, int buffSize, int modRest, int origSize)
         {
-            for (var i = 0; i < newBuff.Length; i += buffSize)
+            var idx = 0;
+            for (var i = 0; i < newBuff.Length - modRest; i += buffSize, idx++)
             {
                 var seqPacket = new SequencePacket
                 {
                     SeqIdx = (i/buffSize),
-                    SeqBuffer = newBuff.Slice(i, buffSize),
-                    IsLast = i == newBuff.Length - buffSize
+                    SeqBuffer = newBuff.FastSlice(i, buffSize),
+                    SeqSize = buffSize,
+                    IsLast = false
                 };
-                if (!seqPacket.IsLast)
-                    seqPacket.SeqSize = buffSize;
-                else
-                    seqPacket.SeqSize = origSize - i;
                 yield return seqPacket;
             }
+            yield return new SequencePacket
+            {
+                SeqIdx = idx,
+                SeqBuffer = newBuff.FastSlice(idx*buffSize, modRest),
+                SeqSize = modRest,
+                IsLast = true
+            };
         }
 
     }

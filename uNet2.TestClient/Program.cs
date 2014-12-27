@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using uNet2.Channel;
 using uNet2.Packet;
 using uNet2.SocketOperation;
@@ -73,7 +72,7 @@ namespace uNet2.TestClient
         {
             var bw = new BinaryWriter(stream);
             bw.Write(PacketId);
-            Data = File.ReadAllBytes(@"C:\BcelEditor.jar");
+            Data = File.ReadAllBytes(@"G:\Steam\SteamUI.dll");
             bw.Write(Data);
         }
 
@@ -148,7 +147,7 @@ namespace uNet2.TestClient
             var client = new UNetClient(new StandardPacketProcessor());
             client.Connect("127.0.0.1", 1000);
 
-            var sequenceContext = SequenceContext.CreateFromPacket(new TestPacket(), 4096);
+            var sequenceContext = SequenceContext.CreateFromPacket(new TestPacket(), 20000);
             client.SendSequence(sequenceContext);
             Console.ReadLine();
         }

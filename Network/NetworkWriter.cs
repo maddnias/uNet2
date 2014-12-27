@@ -13,30 +13,33 @@ namespace uNet2.Network
 {
     internal class NetworkWriter
     {
-        public NetworkWriter()
-        {
-            
-
-        }
 
         public void WritePacketToSocket(IDataPacket data, IChannel senderChannel, Guid guid, BufferObject buffObj,
             Socket sock, AsyncCallback sendCallback, SocketOperationContext operationCtx)
         {
             var ms = new MemoryStream();
             data.SerializeTo(ms);
-            var sendBuff = new List<byte> {operationCtx == null ? ((byte) 0x0) : ((byte) 0x1)};
+
+            var headerSize = 1 + (operationCtx != null ? 32 : 0);
+            var sendBuff2 = new byte[ms.Length + headerSize +4];
+            sendBuff2.FastMoveMem(0, BitConverter.GetBytes(headerSize + ms.Length), 4); 
+            sendBuff2[4] = operationCtx == null ? ((byte) 0x0) : ((byte) 0x1);
+
             if (operationCtx != null)
             {
-                sendBuff.AddRange(operationCtx.OperationGuid.ToByteArray());
-                sendBuff.AddRange(guid.ToByteArray());
+                sendBuff2.FastMoveMem(5, operationCtx.OperationGuid.ToByteArray(), 16);
+                sendBuff2.FastMoveMem(21, guid.ToByteArray(), 16);
             }
-            sendBuff.AddRange(ms.ToArray());
-            sendBuff.InsertRange(0, BitConverter.GetBytes(sendBuff.Count));
-            var buff = sendBuff.ToArray();
+
+            var tmpBuff = new byte[ms.Length];
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.Read(tmpBuff,0,tmpBuff.Length);
+
+            sendBuff2.FastMoveMem(operationCtx != null ? 38 : 5, tmpBuff, tmpBuff.Length);
 
             var sendObj = new Peer.Peer.SendObject {Channel = senderChannel, Packet = data};
             if (sock.Connected)
-                sock.BeginSend(buff, 0, buff.Length, 0, sendCallback, sendObj);
+                sock.BeginSend(sendBuff2, 0, sendBuff2.Length, 0, sendCallback, sendObj);
         }
 
         public void WriteSequenceToSocket(SequenceContext seqCtx, IChannel senderChannel, Guid guid,
@@ -44,7 +47,8 @@ namespace uNet2.Network
             Socket sock, AsyncCallback sendCallback)
         {
             WritePacketToSocket(seqCtx.InitPacket, senderChannel, guid, buffObj, sock, sendCallback, null);
-            seqCtx.SequencePackets.ForEach(seqPacket => WritePacketToSocket(seqPacket, senderChannel, guid, buffObj, sock, sendCallback, null));
+            for (var i = 0; i < seqCtx.SequencePackets.Length; i++)
+                WritePacketToSocket(seqCtx.SequencePackets[i], senderChannel, guid, buffObj, sock, sendCallback, null);
         }
 
         internal static void PrependStreamSize(MemoryStream stream)
