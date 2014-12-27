@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{FDFC8179-FEEA-42D0-ADD9-D31017C71414}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>uNet2</RootNamespace>
+    <AssemblyName>uNet2</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Exceptions\Server\PeerNotFoundException.cs" />
+    <Compile Include="Exceptions\SocketOperation\SocketOperationException.cs" />
+    <Compile Include="Exceptions\SocketOperation\SocketOperationNotInitializedException.cs" />
+    <Compile Include="Packet\SocketOperationRequest.cs" />
+    <Compile Include="SocketOperation\ISocketOperationHost.cs" />
+    <Compile Include="Network\BufferObject.cs" />
+    <Compile Include="ChannelManager.cs" />
+    <Compile Include="Channel\Events\ChannelEventArgs.cs" />
+    <Compile Include="Channel\Events\ChannelEvents.cs" />
+    <Compile Include="Channel\IChannel.cs" />
+    <Compile Include="Channel\IClientChannel.cs" />
+    <Compile Include="Channel\IServerChannel.cs" />
+    <Compile Include="Channel\PendingConnection.cs" />
+    <Compile Include="Channel\TcpClientChannel.cs" />
+    <Compile Include="Channel\TcpServerChannel.cs" />
+    <Compile Include="SocketOperation\ISocketOperation.cs" />
+    <Compile Include="Network\NetworkWriter.cs" />
+    <Compile Include="Network\SequenceSession.cs" />
+    <Compile Include="Packet\Events\SequenceEventArgs.cs" />
+    <Compile Include="SequenceContext.cs" />
+    <Compile Include="SocketOperation\SequenceFragmentInfo.cs" />
+    <Compile Include="SocketOperation\SocketOperationBase.cs" />
+    <Compile Include="SocketOperation\SocketOperationContext.cs" />
+    <Compile Include="UNetClient.cs" />
+    <Compile Include="Exceptions\Channel\ChannelException.cs" />
+    <Compile Include="Exceptions\Channel\ChannelOperationException.cs" />
+    <Compile Include="Exceptions\Server\ServerException.cs" />
+    <Compile Include="Exceptions\Server\ServerInitializationException.cs" />
+    <Compile Include="Extensions\MiscExtensions.cs" />
+    <Compile Include="Packet\Events\PacketEventArgs.cs" />
+    <Compile Include="Packet\Events\PacketEvents.cs" />
+    <Compile Include="Packet\IDataPacket.cs" />
+    <Compile Include="Packet\IPacket.cs" />
+    <Compile Include="Packet\IPacketProcessor.cs" />
+    <Compile Include="Packet\ChannelRelocationPacket.cs" />
+    <Compile Include="Packet\ISequencePacket.cs" />
+    <Compile Include="Packet\SequenceInitPacket.cs" />
+    <Compile Include="Packet\SequencePacket.cs" />
+    <Compile Include="Packet\SynchronizePacket.cs" />
+    <Compile Include="Peer\Events\PeerEventArgs.cs" />
+    <Compile Include="Peer\Events\PeerEvents.cs" />
+    <Compile Include="Peer\Events\PeerRelocationEventArgs.cs" />
+    <Compile Include="Peer\Peer.cs" />
+    <Compile Include="Peer\SequenceHandler.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UNetServer.cs" />
+    <Compile Include="Network\SocketIdentity.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

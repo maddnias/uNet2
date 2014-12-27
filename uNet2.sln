@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uNet2", "uNet2.csproj", "{FDFC8179-FEEA-42D0-ADD9-D31017C71414}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uNet2.Test", "..\uNet2.Test\uNet2.Test.csproj", "{F9170EE9-6ED3-4320-BF25-31A9428C9C86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uNet2.TestClient", "uNet2.TestClient\uNet2.TestClient.csproj", "{55A5F4CA-E04B-4E3C-83C7-75F9724A60EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FDFC8179-FEEA-42D0-ADD9-D31017C71414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDFC8179-FEEA-42D0-ADD9-D31017C71414}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDFC8179-FEEA-42D0-ADD9-D31017C71414}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDFC8179-FEEA-42D0-ADD9-D31017C71414}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9170EE9-6ED3-4320-BF25-31A9428C9C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9170EE9-6ED3-4320-BF25-31A9428C9C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9170EE9-6ED3-4320-BF25-31A9428C9C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9170EE9-6ED3-4320-BF25-31A9428C9C86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55A5F4CA-E04B-4E3C-83C7-75F9724A60EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55A5F4CA-E04B-4E3C-83C7-75F9724A60EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55A5F4CA-E04B-4E3C-83C7-75F9724A60EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55A5F4CA-E04B-4E3C-83C7-75F9724A60EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
