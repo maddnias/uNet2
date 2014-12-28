@@ -32,6 +32,14 @@ namespace uNet2
             SequencePacketBuffers = sequencePacketBuffers;
         }
 
+        internal static SequenceContext OperationCreateFromPacket(IDataPacket data, int fragmentSize, Guid operationGuid)
+        {
+            var seqCtx = CreateFromPacket(data, fragmentSize);
+            seqCtx.InitPacket.IsOperation = true;
+            seqCtx.InitPacket.OperationGuid = operationGuid;
+            return seqCtx;
+        }
+
         public static SequenceContext CreateFromPacket(IDataPacket data, int fragmentSize)
         {
             SequenceInitPacket initPacket;

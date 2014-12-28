@@ -223,11 +223,14 @@ namespace uNet2.Channel
             if (IsMainChannel)
             {
                 newPeer = new Peer.Peer(new SocketIdentity(Manager.GeneratePeerId(), SocketIdentity.GenerateGuid()), newSock, BufferSize, this);
+                newPeer.Receive();
                 AcceptPeer(newPeer);
             }
             else
             {
                 newPeer = new Peer.Peer(new SocketIdentity(Manager.GeneratePeerId()), newSock, BufferSize, this);
+                PendingConnections.Add(new PendingPeerConnection(newPeer.Identity.Guid, newPeer));
+                newPeer.Receive();
                 newPeer.OnPeerRelocationRequest += (sender, e) =>
                 {
                     if (PendingConnections.FirstOrDefault(pc => pc.Guid == e.PeerGuid && !pc.IsCancelled) != null)
@@ -255,19 +258,18 @@ namespace uNet2.Channel
             newPeer.OnSequenceFragmentReceived += (sender, e) => OnSequenceFragmentReceived.Raise(sender, e);
             lock (_lockObj)
                 ConnectedPeers.Add(newPeer);
-            newPeer.Receive();
         }
 
         private void RawPacketReceived(object sender, RawServerPacketEventArgs e)
         {
             IDataPacket parsedPacket;
             var rawDat = e.RawData;
-            //rawDat = PacketProcessor.ProcessRawData(rawDat);
-            //using (var ms = new MemoryStream(rawDat))
-            //{
-            //    parsedPacket = PacketProcessor.ParsePacket(ms);
-            //}
-            OnPacketReceived.Raise(this, new ServerPacketEventArgs(null, e.Peer, this, e.RawData.Length));
+            rawDat = PacketProcessor.ProcessRawData(rawDat);
+            using (var ms = new MemoryStream(rawDat) { Position = 1})
+            {
+                parsedPacket = PacketProcessor.ParsePacket(ms);
+            }
+            OnPacketReceived.Raise(this, new ServerPacketEventArgs(parsedPacket, e.Peer, this, e.RawData.Length));
         }
 
         private void PendingConnectionsTimeoutPulse()
@@ -290,6 +292,22 @@ namespace uNet2.Channel
             var operation = (ISocketOperation)Activator.CreateInstance<T>();
             operation.HostChannel = this;
             return (T)operation;
+        }
+
+        public T RegisterOperation<T>(Guid connectionGuid) where T : ISocketOperation
+        {
+            var operation = CreateOperation<T>();
+            operation.ConnectionGuid = connectionGuid;
+            lock (_lockObj)
+                ActiveSocketOperations.Add(operation.OperationGuid, operation);
+            var operationRequest = new SocketOperationRequest
+            {
+                OperationGuid = operation.OperationGuid,
+                Request = SocketOperationRequest.OperationRequest.Create,
+                OperationId = operation.OperationId
+            };
+            Send(operationRequest, operation.ConnectionGuid);
+            return operation;
         }
 
         public void RegisterOperation(ISocketOperation operation)

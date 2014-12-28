@@ -45,6 +45,7 @@ namespace uNet2.Peer
         private readonly int _bufferSize;
         private readonly Dictionary<Guid, SequenceSession> _activeSequenceSessions;
         private readonly NetworkWriter _netWriter;
+        private readonly NetworkReader _netReader;
         private readonly object _lockObj;
         private IServerChannel _hostChannel;
         internal bool IsDisposed;
@@ -68,6 +69,7 @@ namespace uNet2.Peer
             _netWriter = new NetworkWriter();
             _lockObj = new object();
             _hostChannel = hostChannel;
+            _netReader = new NetworkReader();
         }
 
         public Peer(int id, Socket sock, uint bufferSize, Guid guid, IServerChannel hostChannel)
@@ -80,6 +82,7 @@ namespace uNet2.Peer
             _netWriter = new NetworkWriter();
             _lockObj = new object();
             _hostChannel = hostChannel;
+            _netReader = new NetworkReader();
         }
 
         /// <summary>
@@ -101,18 +104,15 @@ namespace uNet2.Peer
         private void ReadLengthCallback(IAsyncResult res)
         {
             var buffObj = (BufferObject)res.AsyncState;
-            var readLen = _sock.EndReceive(res);
-
-            if (readLen >= 4)
+            try
             {
-                buffObj.PacketSize = BitConverter.ToInt32(buffObj.RecBuff, 0);
-                if (buffObj.PacketSize < buffObj.BufferSize)
-                    _sock.BeginReceive(buffObj.RecBuff, 0, buffObj.PacketSize, 0, ReadDataCallback, buffObj);
-                else
-                    _sock.BeginReceive(buffObj.RecBuff, 0, buffObj.BufferSize, 0, ReadDataCallback, buffObj);
+                var readLen = _sock.EndReceive(res);
+                _netReader.ReadLength(ReadDataCallback, buffObj, _sock, readLen);
             }
-            else
+            catch
+            {
                 Disconnect();
+            }
         }
 
         private void ReadDataCallback(IAsyncResult res)
@@ -250,10 +250,21 @@ namespace uNet2.Peer
                 _activeSequenceSessions[packet.SeqGuid].CurrentReceivedSize += packet.SeqSize;
             }
             var seqSession = _activeSequenceSessions[packet.SeqGuid];
-            OnSequenceFragmentReceived.Raise(this,
-                new SequenceEventArgs(packet.SeqGuid, seqSession.SessionStart, seqSession.InitPacket.FullSequenceSize, packet.SeqSize,
-                    seqSession.CurrentReceivedSize,
-                    seqSession.InitPacket.PartsCount, packet.SeqIdx, this));
+            if (seqSession.IsOperation)
+            {
+                _hostChannel.ActiveSocketOperations[seqSession.OperationGuid].SequenceFragmentReceived(
+                    new SequenceFragmentInfo(packet.SeqGuid, seqSession.SessionStart,
+                        seqSession.InitPacket.FullSequenceSize,
+                        packet.SeqSize, seqSession.CurrentReceivedSize, seqSession.InitPacket.PartsCount, packet.SeqIdx));
+            }
+            else
+            {
+                OnSequenceFragmentReceived.Raise(this,
+                    new SequenceEventArgs(packet.SeqGuid, seqSession.SessionStart,
+                        seqSession.InitPacket.FullSequenceSize, packet.SeqSize,
+                        seqSession.CurrentReceivedSize,
+                        seqSession.InitPacket.PartsCount, packet.SeqIdx, this));
+            }
             if (packet.IsLast)
             {
                 var fullPacketBuff = SequenceHandler.AssembleSequence(_activeSequenceSessions[packet.SeqGuid].Sequence);
@@ -265,7 +276,13 @@ namespace uNet2.Peer
 
         private void HandleSequenceInitPacket(SequenceInitPacket packet)
         {
-            _activeSequenceSessions.Add(packet.SequenceGuid, new SequenceSession(packet));
+            var seqSession = new SequenceSession(packet);
+            if (packet.IsOperation)
+            {
+                seqSession.IsOperation = true;
+                seqSession.OperationGuid = packet.OperationGuid;
+            }
+            _activeSequenceSessions.Add(packet.SequenceGuid, seqSession);
         }
 
         private void HandleRelocationPacket(PeerRelocationRequestPacket packet)

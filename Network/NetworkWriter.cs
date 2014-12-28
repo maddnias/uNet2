@@ -21,25 +21,25 @@ namespace uNet2.Network
             data.SerializeTo(ms);
 
             var headerSize = 1 + (operationCtx != null ? 32 : 0);
-            var sendBuff2 = new byte[ms.Length + headerSize +4];
-            sendBuff2.FastMoveMem(0, BitConverter.GetBytes(headerSize + ms.Length), 4); 
-            sendBuff2[4] = operationCtx == null ? ((byte) 0x0) : ((byte) 0x1);
+            var sendBuff = new byte[ms.Length + headerSize +4];
+            sendBuff.FastMoveMem(0, BitConverter.GetBytes(headerSize + ms.Length), 4); 
+            sendBuff[4] = operationCtx == null ? ((byte) 0x0) : ((byte) 0x1);
 
             if (operationCtx != null)
             {
-                sendBuff2.FastMoveMem(5, operationCtx.OperationGuid.ToByteArray(), 16);
-                sendBuff2.FastMoveMem(21, guid.ToByteArray(), 16);
+                sendBuff.FastMoveMem(5, operationCtx.OperationGuid.ToByteArray(), 16);
+                sendBuff.FastMoveMem(21, guid.ToByteArray(), 16);
             }
 
             var tmpBuff = new byte[ms.Length];
             ms.Seek(0, SeekOrigin.Begin);
             ms.Read(tmpBuff,0,tmpBuff.Length);
 
-            sendBuff2.FastMoveMem(operationCtx != null ? 38 : 5, tmpBuff, tmpBuff.Length);
+            sendBuff.FastMoveMem(operationCtx != null ? 37 : 5, tmpBuff, tmpBuff.Length);
 
             var sendObj = new Peer.Peer.SendObject {Channel = senderChannel, Packet = data};
             if (sock.Connected)
-                sock.BeginSend(sendBuff2, 0, sendBuff2.Length, 0, sendCallback, sendObj);
+                sock.BeginSend(sendBuff, 0, sendBuff.Length, 0, sendCallback, sendObj);
         }
 
         public void WriteSequenceToSocket(SequenceContext seqCtx, IChannel senderChannel, Guid guid,

@@ -52,6 +52,7 @@ namespace uNet2.Channel
         public UNetClient Client { get; set; }
         public IPEndPoint EndPoint { get; set; }
         public Dictionary<int, Type> OperationTable { get; set; }
+        public bool IsSynchronized { get; set; }
 
         public bool IsMainChannel { get; set; }
 
@@ -113,7 +114,12 @@ namespace uNet2.Channel
         {
             ChannelSocket.EndConnect(res);
             Receive();
-            var syncPacket = new SynchronizePacket() { Guid = Client.Identity.Guid };
+
+            var syncPacket = new SynchronizePacket()
+            {
+                Guid = Client.Identity.Guid
+            };
+
             Send(syncPacket);
         }
 
@@ -141,7 +147,8 @@ namespace uNet2.Channel
 
         private void SendCallback(IAsyncResult res)
         {
-            ChannelSocket.EndSend(res);
+            var sent = ChannelSocket.EndSend(res);
+            Debug.Print(sent.ToString());
         }
 
         private void Receive()
@@ -174,7 +181,6 @@ namespace uNet2.Channel
 
         private void ReadDataCallback(IAsyncResult res)
         {
-
             var buffObj = (BufferObject) res.AsyncState;
             buffObj.ReadLen = ChannelSocket.EndReceive(res);
             buffObj.TotalRead += buffObj.ReadLen;
@@ -233,6 +239,8 @@ namespace uNet2.Channel
                         ActiveSocketOperations[operationGuid].PacketReceived(packet, this);
                     }
                 }
+                else
+                    RawPacketReceived(dataBuff);
                 buffObj.ReadLen = 0;
                 buffObj.CompleteBuff.Clear();
                 buffObj.PacketSize = 0;
@@ -279,19 +287,20 @@ namespace uNet2.Channel
                 Send(syncPacket);
             }
             else
+            {
+                IsSynchronized = true;
                 _synchronizeHandle.Set();
+            }
         }
 
-        private void RawPacketReceived(object sender, RawServerPacketEventArgs e)
+        private void RawPacketReceived(byte[] data)
         {
             IDataPacket parsedPacket;
-            var rawDat = e.RawData;
-            //rawDat = PacketProcessor.ProcessRawData(rawDat);
-            //using (var ms = new MemoryStream(rawDat))
-            //{
-            //    parsedPacket = PacketProcessor.ParsePacket(ms);
-            //}
-
+            using (var ms = new MemoryStream(data) { Position = 1})
+            {
+                parsedPacket = PacketProcessor.ParsePacket(ms);
+            }
+            OnPacketReceived.Raise(this, new ClientPacketEventArgs(parsedPacket, this, data.Length));
         }
 
         private void HandleRelocationPacket(PeerRelocationRequestPacket packet)
@@ -300,7 +309,13 @@ namespace uNet2.Channel
                 return;
             var newChannel = Client.CreateChannel<TcpClientChannel>();
             newChannel.Client = Client;
+            newChannel.IsSynchronized = true;
+            foreach (var op in OperationTable)
+                newChannel.OperationTable.Add(op.Key, op.Value);
+            newChannel.PacketProcessor = PacketProcessor;
             newChannel.ConnectToChannel(EndPoint.Address.ToString(), packet.Port);
+            newChannel.OnPacketReceived += OnPacketReceived;
+            newChannel.OnPacketSent += OnPacketSent;
             Client.ActiveChannels.Add(newChannel);
 
             newChannel.Send(new PeerRelocationRequestPacket
@@ -332,6 +347,11 @@ namespace uNet2.Channel
             var operation = (ISocketOperation)Activator.CreateInstance<T>();
             operation.HostChannel = this;
             return (T)operation;
+        }
+
+        public T RegisterOperation<T>(Guid connectionGuid) where T : ISocketOperation
+        {
+            throw new NotImplementedException();
         }
 
         public void RegisterOperation(ISocketOperation operation)

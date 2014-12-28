@@ -9,6 +9,8 @@ namespace uNet2.Packet
         public int PartsCount { get; set; }
         public int FullSequenceSize { get; set; }
         public Guid SequenceGuid { get; set; }
+        public bool IsOperation { get; set; }
+        public Guid OperationGuid { get; set; }
 
         public void SerializeTo(Stream stream)
         {
@@ -17,6 +19,8 @@ namespace uNet2.Packet
             bw.Write(FullSequenceSize);
             bw.Write(PartsCount);
             bw.Write(SequenceGuid.ToByteArray());
+            bw.Write(IsOperation);
+            bw.Write(OperationGuid.ToByteArray());
         }
 
         public void DeserializeFrom(Stream stream)
@@ -26,6 +30,9 @@ namespace uNet2.Packet
             FullSequenceSize = br.ReadInt32();
             PartsCount = br.ReadInt32();
             SequenceGuid = new Guid(br.ReadBytes(16));
+            IsOperation = br.ReadBoolean();
+            if(IsOperation)
+                OperationGuid = new Guid(br.ReadBytes(16));
         }
     }
 }

@@ -13,6 +13,7 @@ namespace uNet2.SocketOperation
         public Guid ConnectionGuid { get; set; }
         public IChannel HostChannel { get; set; }
         internal bool IsReady { get; set; }
+        internal OperationSocket OperationSocket { get; set; }
 
         protected SocketOperationBase()
         {
@@ -36,8 +37,10 @@ namespace uNet2.SocketOperation
 
         public void SendSequence(SequenceContext seqCtx)
         {
-            if (!IsReady)
-                throw new SocketOperationNotInitializedException();
+            seqCtx.InitPacket.IsOperation = true;
+            seqCtx.InitPacket.OperationGuid = OperationGuid;
+            if (HostChannel is TcpClientChannel)
+                ((TcpClientChannel) HostChannel).SendSequence(seqCtx);
         }
 
         public abstract void PacketReceived(IDataPacket packet, IChannel sender);

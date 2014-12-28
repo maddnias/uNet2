@@ -7,6 +7,7 @@ namespace uNet2.SocketOperation
     public interface ISocketOperationHost
     {
         T CreateOperation<T>() where T : ISocketOperation;
+        T RegisterOperation<T>(Guid connectionGuid) where T : ISocketOperation;
         void RegisterOperation(ISocketOperation operation);
         void UnregisterOperation(ISocketOperation operation);
         void UnregisterOperation(Guid operationGuid);

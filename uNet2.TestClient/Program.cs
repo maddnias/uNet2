@@ -23,7 +23,10 @@ namespace uNet2.TestClient
         {
             if (packet is FileTransferInitiatePacket)
             {
-                SendPacket(new FileTransferPacket() {Size = 5});
+                SendSequence(
+                    SequenceContext.CreateFromPacket(
+                        new FileTransferPacket {File = File.ReadAllBytes(Assembly.GetExecutingAssembly().Location)},
+                        1024));
                 CloseOperation();
             }
         }
@@ -45,6 +48,20 @@ namespace uNet2.TestClient
 
     }
 
+    public class PingPacket : IDataPacket
+    {
+        public int PacketId { get { return 1; } }
+        public void SerializeTo(Stream stream)
+        {
+            stream.Write(BitConverter.GetBytes(PacketId), 0, sizeof(int));
+        }
+
+        public void DeserializeFrom(Stream stream)
+        {
+
+        }
+    }
+
     public class FileTransferInitiatePacket : IDataPacket
     {
         public int PacketId { get { return 2; } }
@@ -52,11 +69,6 @@ namespace uNet2.TestClient
         {
             var bw = new BinaryWriter(stream);
             bw.Write(PacketId);
-            var buff =
-                File.ReadAllBytes(
-                    @"C:\BcelEditor.jar");
-
-            bw.Write(buff);
         }
 
         public void DeserializeFrom(Stream stream)
@@ -91,13 +103,15 @@ namespace uNet2.TestClient
         {
             var bw = new BinaryWriter(stream);
             bw.Write(PacketId);
-            bw.Write(Size);
+            bw.Write(File.Length);
+            bw.Write(File);
         }
 
         public void DeserializeFrom(Stream stream)
         {
             var br = new BinaryReader(stream);
             Size = br.ReadInt32();
+            File = br.ReadBytes(Size);
         }
     }
 
@@ -105,7 +119,7 @@ namespace uNet2.TestClient
     {
         private Dictionary<int, Type> _packetTable = new Dictionary<int, Type>
         {
-            {1, typeof (FileTransferPacket)},
+            {1, typeof (PingPacket)},
             {2, typeof(FileTransferInitiatePacket)}
         };
 
@@ -127,7 +141,7 @@ namespace uNet2.TestClient
     {
         static void Main(string[] args)
         {
-            Example2();
+            Example4();
         }
 
         public static void Example1()
@@ -146,9 +160,39 @@ namespace uNet2.TestClient
 
             var client = new UNetClient(new StandardPacketProcessor());
             client.Connect("127.0.0.1", 1000);
+            var seqCtx = SequenceContext.CreateFromPacket(new TestPacket(), 8192);
+            client.SendSequence(seqCtx);
+            Console.ReadLine();
+        }
 
-            var sequenceContext = SequenceContext.CreateFromPacket(new TestPacket(), 20000);
-            client.SendSequence(sequenceContext);
+
+        public static void Example3()
+        {
+            Thread.Sleep(2000);
+
+            var client = new UNetClient(new StandardPacketProcessor());
+            client.RegisterOperation<FileTransferOperation>();
+            client.Connect("127.0.0.1", 1000);
+            Console.ReadLine();
+        }
+
+        public static void Example4()
+        {
+            Thread.Sleep(2000);
+
+            var client = new UNetClient(new StandardPacketProcessor());
+
+            client.OnPacketReceived += (sender, e) =>
+            {
+                if (e.Packet.PacketId == 1)
+                {
+                    Console.WriteLine("Received pingpacket to client @ channel {0}", e.Channel.Id);
+                    client.Send(new PingPacket(), e.Channel);
+                }
+            };
+            client.Connect("127.0.0.1", 1000);
+
+
             Console.ReadLine();
         }
     }

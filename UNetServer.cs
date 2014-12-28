@@ -105,6 +105,23 @@ namespace uNet2
         /// which may cause issues
         /// </remarks>
         /// <typeparam name="T">The type of channel to create</typeparam>
+        /// <returns>Returns a newly created channel ready to be added</returns>
+        public T CreateChannel<T>(IPacketProcessor packetProcessor) where T : IServerChannel
+        {
+            var channel = (T) _channelMgr.CreateChannel<T>();
+            channel.PacketProcessor = packetProcessor;
+            return channel;
+        }
+
+        /// <summary>
+        /// Creates a channel and assigns a valid ID, port and manager to it
+        /// </summary>
+        /// <remarks>
+        /// It is recommended to use this method whenever you wish to create a new channel.
+        /// The only reason not to use this method is if you wish to create a channel with a specific ID
+        /// which may cause issues
+        /// </remarks>
+        /// <typeparam name="T">The type of channel to create</typeparam>
         /// <param name="name">The name of the channel</param>
         /// <returns>Returns a newly created channel ready to be added</returns>
         public T CreateChannel<T>(string name) where T : IServerChannel
@@ -132,6 +149,7 @@ namespace uNet2
                 return false;
             OnChannelCreated.Raise(this, new ChannelEventArgs(channel));
             channel.OnPeerConnected += (sender, e) => OnPeerConnected.Raise(this, e);
+            channel.PacketProcessor = _channelMgr.GetMainChannel().PacketProcessor;
             return true;
         }
 

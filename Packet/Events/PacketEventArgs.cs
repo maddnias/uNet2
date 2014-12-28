@@ -25,10 +25,10 @@ namespace uNet2.Packet.Events
     public class ClientPacketEventArgs : EventArgs
     {
         public IDataPacket Packet { get; set; }
-        public IChannel Channel { get; set; }
+        public IClientChannel Channel { get; set; }
         public int RawSize { get; set; }
 
-        public ClientPacketEventArgs(IDataPacket packet, IChannel channel, int rawSize)
+        public ClientPacketEventArgs(IDataPacket packet, IClientChannel channel, int rawSize)
         {
             Packet = packet;
             Channel = channel;

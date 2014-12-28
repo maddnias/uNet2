@@ -124,8 +124,10 @@ namespace uNet2
         public bool AddChannel(IChannel channel)
         {
             if (channel is IServerChannel)
-                if (((IServerChannel)channel).IsMainChannel)
+                if (channel.IsMainChannel)
                     throw new ChannelOperationException("Attempt to add additional main channel in server");
+            if (channel is IServerChannel)
+                ((IServerChannel) channel).Start();
             if (_channels.Contains(channel))
                 return false;
             if (_channels.FirstOrDefault(ch => ch.Id == channel.Id) != null)
@@ -218,7 +220,7 @@ namespace uNet2
 
         public void AddPeerToChannel(IServerChannel channel, Predicate<Peer.Peer> pred)
         {
-            var peer = GetMainServerChannel().ConnectedPeers.FirstOrDefault(new Func<Peer.Peer, bool>(pred));
+            var peer = ((IServerChannel)GetMainChannel()).ConnectedPeers.FirstOrDefault(new Func<Peer.Peer, bool>(pred));
             if (peer == null)
                 throw new ChannelOperationException("Could not locate peer");
 
@@ -245,9 +247,9 @@ namespace uNet2
             _channels.Clear();
         }
 
-        private IServerChannel GetMainServerChannel()
+        internal IChannel GetMainChannel()
         {
-            return (IServerChannel)_channels.First(ch => ((IServerChannel) ch).IsMainChannel);
+            return _channels.First(ch => ch.IsMainChannel);
         }
     }
 }

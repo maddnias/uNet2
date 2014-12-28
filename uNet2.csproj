@@ -51,6 +51,7 @@
     <Compile Include="Exceptions\Server\PeerNotFoundException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationNotInitializedException.cs" />
+    <Compile Include="Network\NetworkReader.cs" />
     <Compile Include="Packet\SocketOperationRequest.cs" />
     <Compile Include="SocketOperation\ISocketOperationHost.cs" />
     <Compile Include="Network\BufferObject.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Network\SequenceSession.cs" />
     <Compile Include="Packet\Events\SequenceEventArgs.cs" />
     <Compile Include="SequenceContext.cs" />
+    <Compile Include="SocketOperation\OperationSocket.cs" />
     <Compile Include="SocketOperation\SequenceFragmentInfo.cs" />
     <Compile Include="SocketOperation\SocketOperationBase.cs" />
     <Compile Include="SocketOperation\SocketOperationContext.cs" />

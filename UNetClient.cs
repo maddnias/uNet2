@@ -34,9 +34,14 @@ namespace uNet2
             return GetMainChannel().ConnectToChannel(addr, port);
         }
 
-        public void SendData(IDataPacket packet)
+        public void Send(IDataPacket packet)
         {
             GetMainChannel().Send(packet);
+        }
+
+        public void Send(IDataPacket packet, IClientChannel channel)
+        {
+            channel.Send(packet);
         }
 
         public void SendSequence(SequenceContext seqCtx)

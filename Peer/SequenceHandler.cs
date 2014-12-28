@@ -54,9 +54,9 @@ namespace uNet2.Peer
         public static byte[] AssembleSequence(IList<ISequencePacket> packets)
         {
             var fullBuff = new byte[packets.Sum(p => p.SeqSize) - 4];
-#if DEBUG
+
             Debug.Assert(packets.OrderBy(p => p.SeqIdx).ToList().SequenceEqual(packets));
-#endif
+
             var offset = 0;
             foreach (var packet in packets)
             {

@@ -14,6 +14,8 @@ namespace uNet2.Network
         public int CurrentReceivedSize { get; set; }
         public DateTime SessionStart { get; set; }
         public bool IsCancelled { get; set; }
+        public bool IsOperation { get; set; }
+        public Guid OperationGuid { get; set; }
 
         public SequenceSession()
         {
