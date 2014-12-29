@@ -33,30 +33,6 @@ namespace uNet2.Extensions
                 yield return arr[i];
         }
 
-        /// <summary>
-        /// Slice an array to get a specific part of it
-        /// </summary>
-        /// <remarks>
-        /// WILL NOT WORK ON .NET >3.5
-        /// </remarks>
-        /// <param name="arr">The array</param>
-        /// <param name="idx">Index to initiate slicing from</param>
-        /// <param name="count">Amount of elements to slice</param>
-        /// <returns>Returns the sliced part of the array</returns>
-        public unsafe static byte[] FastSlice(this byte[] arr, int idx, int count)
-        {
-            var newArr = new byte[count];
-            fixed (byte* pDest = newArr, pSrc = arr)
-                _memcpyimpl(pSrc + idx, pDest, count);
-            return newArr;
-        }
-
-        public unsafe static void FastMoveMem(this byte[] arr, int idx, byte[] src, int count)
-        {
-            fixed (byte* pDest = arr, pSrc = src)
-                _memcpyimpl(pSrc, pDest+idx, count);
-        }
-
         public static T[] CreateBuffer<T>(this T item)
         {
             return new [] {item};

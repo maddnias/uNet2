@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net;
 using uNet2.Packet;
 using uNet2.Packet.Events;
-using uNet2.SocketOperation;
 
 namespace uNet2.Channel
 {

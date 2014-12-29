@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using uNet2.Extensions;
 using uNet2.Network;
 using uNet2.Packet;
 using uNet2.Packet.Events;
-using uNet2.Peer;
 using uNet2.SocketOperation;
+using uNet2.Utils;
 
 namespace uNet2.Channel
 {
@@ -63,7 +61,7 @@ namespace uNet2.Channel
         public Dictionary<Guid, ISocketOperation> ActiveSocketOperations { get; set; }
 
         private readonly int _bufferSize;
-        private readonly Dictionary<Guid, List<ISequencePacket>> _activeSequenceSessions;
+        private Dictionary<Guid, List<ISequencePacket>> _activeSequenceSessions;
         private readonly AutoResetEvent _synchronizeHandle;
         private readonly Dictionary<int, Type> _internalPacketTbl = new Dictionary<int, Type>
         {
@@ -185,7 +183,7 @@ namespace uNet2.Channel
             buffObj.ReadLen = ChannelSocket.EndReceive(res);
             buffObj.TotalRead += buffObj.ReadLen;
 
-            buffObj.CompleteBuff.AddRange(buffObj.RecBuff.FastSlice(0, buffObj.ReadLen));
+            buffObj.CompleteBuff.AddRange(FastBuffer.SliceBuffer(buffObj.RecBuff, 0, buffObj.ReadLen));
             if (buffObj.CompleteBuff.Count < buffObj.PacketSize)
             {
                 // keep reading

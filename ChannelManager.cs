@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using uNet2.Channel;
-using uNet2.Channel.Events;
 using uNet2.Exceptions.Channel;
 using uNet2.Packet;
 
@@ -169,7 +168,7 @@ namespace uNet2
         {
             var channel = GetChannel<IChannel>(id);
             if (channel is IServerChannel)
-                if (_channels.Count == 1 && ((IServerChannel)channel).IsMainChannel)
+                if (_channels.Count == 1 && channel.IsMainChannel)
                     throw new ChannelOperationException("Can not remove main channel when no other channels are present");
             lock (_channelLockObj)
                 _channels.RemoveWhere(c => c.Id == id);
@@ -188,7 +187,7 @@ namespace uNet2
         {
             var channel = GetChannel<IChannel>(pred);
             if (channel is IServerChannel)
-                if (_channels.Count == 1 && ((IServerChannel)channel).IsMainChannel)
+                if (_channels.Count == 1 && channel.IsMainChannel)
                     throw new ChannelOperationException("Can not remove main channel when no other channels are present");
             var id = _channels.First(new Func<IChannel, bool>(pred)).Id;
             lock (_channelLockObj)

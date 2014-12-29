@@ -42,6 +42,11 @@ namespace uNet2.Network
             _isSet = true;
         }
 
+        public override string ToString()
+        {
+            return Guid.ToString();
+        }
+
         public static Guid GenerateGuid()
         {
             return Guid.NewGuid();

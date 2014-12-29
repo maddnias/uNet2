@@ -7,6 +7,7 @@ using System.Text;
 using uNet2.Extensions;
 using uNet2.Network;
 using uNet2.Packet;
+using uNet2.Utils;
 
 namespace uNet2.Peer
 {
@@ -75,7 +76,7 @@ namespace uNet2.Peer
                 var seqPacket = new SequencePacket
                 {
                     SeqIdx = (i/buffSize),
-                    SeqBuffer = newBuff.FastSlice(i, buffSize),
+                    SeqBuffer = FastBuffer.SliceBuffer(newBuff, i, buffSize),
                     SeqSize = buffSize,
                     IsLast = false
                 };
@@ -84,7 +85,7 @@ namespace uNet2.Peer
             yield return new SequencePacket
             {
                 SeqIdx = idx,
-                SeqBuffer = newBuff.FastSlice(idx*buffSize, modRest),
+                SeqBuffer = FastBuffer.SliceBuffer(newBuff, idx*buffSize, modRest),
                 SeqSize = modRest,
                 IsLast = true
             };

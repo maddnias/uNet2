@@ -8,6 +8,7 @@ using uNet2.Extensions;
 using uNet2.Packet;
 using uNet2.Peer;
 using uNet2.SocketOperation;
+using uNet2.Utils;
 
 namespace uNet2.Network
 {
@@ -22,20 +23,20 @@ namespace uNet2.Network
 
             var headerSize = 1 + (operationCtx != null ? 32 : 0);
             var sendBuff = new byte[ms.Length + headerSize +4];
-            sendBuff.FastMoveMem(0, BitConverter.GetBytes(headerSize + ms.Length), 4); 
+            FastBuffer.MemCpy(BitConverter.GetBytes(headerSize + ms.Length), 0, sendBuff, 0, 4); 
             sendBuff[4] = operationCtx == null ? ((byte) 0x0) : ((byte) 0x1);
 
             if (operationCtx != null)
             {
-                sendBuff.FastMoveMem(5, operationCtx.OperationGuid.ToByteArray(), 16);
-                sendBuff.FastMoveMem(21, guid.ToByteArray(), 16);
+                FastBuffer.MemCpy(operationCtx.OperationGuid.ToByteArray(), 0, sendBuff, 5, 16);
+                FastBuffer.MemCpy(guid.ToByteArray(), 0, sendBuff, 21, 16);
             }
 
             var tmpBuff = new byte[ms.Length];
             ms.Seek(0, SeekOrigin.Begin);
             ms.Read(tmpBuff,0,tmpBuff.Length);
 
-            sendBuff.FastMoveMem(operationCtx != null ? 37 : 5, tmpBuff, tmpBuff.Length);
+            FastBuffer.MemCpy(tmpBuff, 0, sendBuff, operationCtx != null ? 37 : 5, tmpBuff.Length);
 
             var sendObj = new Peer.Peer.SendObject {Channel = senderChannel, Packet = data};
             if (sock.Connected)

@@ -12,6 +12,7 @@ using uNet2.Packet;
 using uNet2.Packet.Events;
 using uNet2.Peer.Events;
 using uNet2.SocketOperation;
+using uNet2.Utils;
 
 namespace uNet2.Peer
 {
@@ -121,7 +122,7 @@ namespace uNet2.Peer
             buffObj.ReadLen = _sock.EndReceive(res);
             buffObj.TotalRead += buffObj.ReadLen;
 
-            buffObj.CompleteBuff.AddRange(buffObj.RecBuff.FastSlice(0, buffObj.ReadLen));
+            buffObj.CompleteBuff.AddRange(FastBuffer.SliceBuffer(buffObj.RecBuff, 0, buffObj.ReadLen));
             if (buffObj.CompleteBuff.Count < buffObj.PacketSize)
             {
                 // keep reading

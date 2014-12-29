@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using uNet2.Extensions;
+using uNet2.Utils;
 
 namespace uNet2.Packet
 {
@@ -24,7 +25,7 @@ namespace uNet2.Packet
             bw.Write(SeqIdx);
             bw.Write(IsLast);
             bw.Write(SeqSize);
-            bw.Write(SeqBuffer.FastSlice(0, SeqSize));
+            bw.Write(FastBuffer.SliceBuffer(SeqBuffer, 0, SeqSize));
         }
 
         public void DeserializeFrom(Stream stream)
