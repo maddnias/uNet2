@@ -124,13 +124,14 @@ namespace uNet2.Test
     {
         static void Main(string[] args)
         {
-            Example4();
+            Example1();
         }
 
         // Simple example on how multiple channels can be handled
         public static void Example1()
         {
             var srv = new UNetServer();
+            Peer.Peer p = null;
 
             // Register global events across all channels
             srv.OnPeerConnected +=
@@ -139,13 +140,17 @@ namespace uNet2.Test
             srv.OnChannelCreated +=
                 (sender, e) => Console.WriteLine("A channel was created with name: {0}", e.Channel.Name);
 
-            // Create a main channel for theserver
+            // Create a main channel for the server
             var mainChannel = srv.CreateChannel<TcpServerChannel>();
 
             // Register events on main channel exclusively
             mainChannel.OnPeerConnected +=
                 (sender, e) =>
-                    Console.WriteLine("A peer has connected to the mainchannel with GUID: {0}", e.Peer.Identity.Guid);
+                {
+                    Console.WriteLine("A peer has connected to the mainchannel with GUID: {0}",
+                        e.Peer.Identity.Guid);
+                    srv.AddPeerToChannel(srv.GetChannel<TcpServerChannel>(ch => ch.Name == "MySecondChannel"), e.Peer.Identity);
+                };
             mainChannel.OnPacketReceived +=
                 (sender, e) =>
                     Console.WriteLine("A packet was received on the mainchannel from peer with GUID: {0}",
@@ -153,9 +158,9 @@ namespace uNet2.Test
 
             // Initialize the server and start listening on the main channel
             srv.Initialize(mainChannel);
-
             // Create and add a second channel to the server
             srv.CreateAndAddChannel<TcpServerChannel>(ch => ch.Name = "MySecondChannel");
+
             Console.ReadLine();
         }
 
@@ -163,13 +168,17 @@ namespace uNet2.Test
         public static void Example2()
         {
             var srv = new UNetServer();
-            var mainChannel = srv.CreateChannel<TcpServerChannel>();
+            var mainChannel = srv.CreateChannel<TcpServerChannel>(Activator.CreateInstance<StandardPacketProcessor>());
             mainChannel.OnSequenceFragmentReceived += (sender, e) =>
             {
                 float receivedPercentage = ((e.CurrentReceivedSize * 100f) / e.ExpectedCompleteSize);
                 double receiveSpeed =
                     Math.Round((e.CurrentReceivedSize / (DateTime.Now - e.SessionStart).TotalSeconds) / 1048576, 2);
                 Console.WriteLine("Receiving file: {0}% @ {1} mb/s", receivedPercentage, receiveSpeed);
+            };
+            mainChannel.OnPacketReceived += (sender, e) =>
+            {
+                Console.Write(e.ToString());
             };
             srv.Initialize(mainChannel);
 
@@ -217,8 +226,8 @@ namespace uNet2.Test
         public static void Example4()
         {
             var srv = new UNetServer();
-            var mainChannel = srv.CreateChannel<TcpServerChannel>(new StandardPacketProcessor());
-            var secondChannel = srv.CreateChannel<TcpServerChannel>(new StandardPacketProcessor());
+            var mainChannel = srv.CreateChannel<TcpServerChannel, StandardPacketProcessor>();
+            var secondChannel = srv.CreateChannel<TcpServerChannel, StandardPacketProcessor>();
 
             mainChannel.OnPeerConnected += (sender, e) => srv.AddPeerToChannel(secondChannel, p => p.Identity.Equals(e.Peer.Identity));
 

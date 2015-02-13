@@ -237,6 +237,8 @@ namespace uNet2.Channel
                     {
                         AcceptPeer(newPeer);
                         OnPeerConnected.Raise(this, new ChannelEventArgs(this, e.Peer));
+                        lock (_lockObj)
+                            PendingConnections.Remove(PendingConnections.First(pc => pc.Guid == e.PeerGuid));
                     }
                 };
             }

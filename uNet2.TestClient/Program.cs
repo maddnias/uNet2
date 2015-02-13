@@ -84,7 +84,7 @@ namespace uNet2.TestClient
         {
             var bw = new BinaryWriter(stream);
             bw.Write(PacketId);
-            Data = File.ReadAllBytes(@"G:\Steam\SteamUI.dll");
+            Data = File.ReadAllBytes(@"C:\Users\mattias\Documents\Visual Studio 2013\Projects\ScireNET\ScireNET.Server.GUI\bin\Debug\ScireNET.Server.GUI.exe");
             bw.Write(Data);
         }
 
@@ -141,7 +141,7 @@ namespace uNet2.TestClient
     {
         static void Main(string[] args)
         {
-            Example4();
+            Example1();
         }
 
         public static void Example1()

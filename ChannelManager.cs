@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using uNet2.Channel;
 using uNet2.Exceptions.Channel;
+using uNet2.Network;
 using uNet2.Packet;
 
 namespace uNet2
@@ -231,6 +232,24 @@ namespace uNet2
                 Port = (int)channel.Port
             };
             lock(_channelLockObj)
+                channel.PendingConnections.Add(new PendingPeerConnection(peer.Identity.Guid, peer));
+            peer.SendData(relocationPacket, channel, null);
+        }
+
+        public void AddPeerToChannel(IServerChannel channel, SocketIdentity identity)
+        {
+            var peer = ((IServerChannel)GetMainChannel()).ConnectedPeers.FirstOrDefault(p => p.Identity.Equals(identity));
+            if (peer == null)
+                throw new ChannelOperationException("Could not locate peer");
+
+            var relocationPacket = new PeerRelocationRequestPacket
+            {
+                ChannelId = channel.Id,
+                PeerGuid = peer.Identity.Guid,
+                Operation = PeerRelocationRequestPacket.RelocateOperation.Join,
+                Port = (int)channel.Port
+            };
+            lock (_channelLockObj)
                 channel.PendingConnections.Add(new PendingPeerConnection(peer.Identity.Guid, peer));
             peer.SendData(relocationPacket, channel, null);
         }

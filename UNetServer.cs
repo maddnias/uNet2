@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using uNet2.Channel;
 using uNet2.Channel.Events;
 using uNet2.Exceptions.Channel;
 using uNet2.Exceptions.Server;
+using uNet2.Network;
 using uNet2.Packet;
 using uNet2.SocketOperation;
 
@@ -27,6 +29,11 @@ namespace uNet2
         public event ChannelEvents.OnPeerConnected OnPeerConnected;
 
         private readonly ChannelManager _channelMgr;
+
+        public List<Peer.Peer> ConnectedPeers
+        {
+            get { return GetMainChannel().ConnectedPeers; }
+        }
 
         /// <summary>
         /// Use <see cref="Initialize(IServerChannel)"/> when initializing server
@@ -135,6 +142,11 @@ namespace uNet2
             return (T)_channelMgr.CreateChannel<T, TU>();
         }
 
+        public IServerChannel GetMainChannel()
+        {
+            return _channelMgr.GetMainChannel() as IServerChannel;
+        }
+
         /// <summary>
         /// Adds a channel to this server
         /// </summary>
@@ -176,6 +188,7 @@ namespace uNet2
             if (!_channelMgr.AddChannel(channel))
                 return false;
             OnChannelCreated.Raise(this, new ChannelEventArgs(channel));
+            channel.OnPeerConnected += OnPeerConnected;
             return true;
         }
 
@@ -245,6 +258,11 @@ namespace uNet2
         public void AddPeerToChannel(IServerChannel channel, Predicate<Peer.Peer> pred)
         {
             _channelMgr.AddPeerToChannel(channel, pred);
+        }
+
+        public void AddPeerToChannel(IServerChannel channel, SocketIdentity identity)
+        {
+            _channelMgr.AddPeerToChannel(channel, identity);
         }
 
         /// <summary>

@@ -53,7 +53,6 @@ namespace uNet2
                 out seqGuid);
             var initPacketStream = new MemoryStream();
 
-
             initPacket.SerializeTo(initPacketStream);
 
 #if DEBUG
