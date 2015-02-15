@@ -5,6 +5,7 @@ using uNet2.Channel;
 using uNet2.Network;
 using uNet2.Packet;
 using uNet2.Packet.Events;
+using uNet2.Security;
 using uNet2.SocketOperation;
 
 namespace uNet2
@@ -16,6 +17,34 @@ namespace uNet2
         public SocketIdentity Identity { get; set; }
         public IPacketProcessor PacketProcessor { get; set; }
         public List<IClientChannel> ActiveChannels { get; set; }
+
+        public bool EnsurePacketIntegrity
+        {
+            get
+            {
+                return _ensurePacketIntegrity;
+            }
+            set
+            {
+                foreach (var ch in _channelManager.GetAllChannles())
+                    ch.EnsurePacketIntegrity = value;
+                _ensurePacketIntegrity = value;
+            }
+        }
+
+        public PacketIntegrityHash PacketIntegrityHash
+        {
+            get { return _packetIntegrityHash; }
+            set
+            {
+                foreach (var ch in _channelManager.GetAllChannles())
+                    ch.IntegrityHash = value;
+                _packetIntegrityHash = value;
+            }
+        }
+
+        private PacketIntegrityHash _packetIntegrityHash;
+        private bool _ensurePacketIntegrity;
         private Dictionary<int, ISocketOperation> _operationTable { get; set; }
 
         private readonly ChannelManager _channelManager;

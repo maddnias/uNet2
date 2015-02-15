@@ -9,6 +9,7 @@ using uNet2.Extensions;
 using uNet2.Network;
 using uNet2.Packet;
 using uNet2.Packet.Events;
+using uNet2.Security;
 using uNet2.SocketOperation;
 using uNet2.Utils;
 
@@ -51,6 +52,8 @@ namespace uNet2.Channel
         public IPEndPoint EndPoint { get; set; }
         public Dictionary<int, Type> OperationTable { get; set; }
         public bool IsSynchronized { get; set; }
+        public bool EnsurePacketIntegrity { get; set; }
+        public PacketIntegrityHash IntegrityHash { get; set; }
 
         public bool IsMainChannel { get; set; }
 
@@ -61,7 +64,7 @@ namespace uNet2.Channel
         public Dictionary<Guid, ISocketOperation> ActiveSocketOperations { get; set; }
 
         private readonly int _bufferSize;
-        private Dictionary<Guid, List<ISequencePacket>> _activeSequenceSessions;
+        private readonly Dictionary<Guid, List<ISequencePacket>> _activeSequenceSessions;
         private readonly AutoResetEvent _synchronizeHandle;
         private readonly Dictionary<int, Type> _internalPacketTbl = new Dictionary<int, Type>
         {
@@ -86,12 +89,13 @@ namespace uNet2.Channel
             _lockObj = new object();
         }
 
-        public TcpClientChannel(UNetClient client)
+        public TcpClientChannel(UNetClient client, Dictionary<Guid, List<ISequencePacket>> activeSequenceSessions)
         {
             ChannelSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _synchronizeHandle = new AutoResetEvent(false);
             _buffObj = new BufferObject(_bufferSize = 8192);
             Client = client;
+            _activeSequenceSessions = activeSequenceSessions;
             _netWriter = new NetworkWriter();
             ActiveSocketOperations = new Dictionary<Guid, ISocketOperation>();
             OperationTable = new Dictionary<int, Type>();
@@ -129,12 +133,12 @@ namespace uNet2.Channel
 
         public void Send(IDataPacket data)
         {
-            _netWriter.WritePacketToSocket(data, null, Client.Identity.Guid, _buffObj, ChannelSocket, SendCallback, null);
+            _netWriter.WritePacketToSocket(data, this, Client.Identity.Guid, _buffObj, ChannelSocket, SendCallback, null);
         }
 
         public void SendSequence(SequenceContext seqCtx)
         {
-            _netWriter.WriteSequenceToSocket(seqCtx, null, Client.Identity.Guid, _buffObj, ChannelSocket, SendCallback);
+            _netWriter.WriteSequenceToSocket(seqCtx, this, Client.Identity.Guid, _buffObj, ChannelSocket, SendCallback);
         }
 
         internal void OperationSend(IDataPacket data, Guid peerGuid, Guid operationGuid)
@@ -203,18 +207,18 @@ namespace uNet2.Channel
                 var connectionGuid = Guid.Empty;
                 if (isOperation)
                 {
-                    operationGuid = new Guid(dataBuff.Slice(1, 16));
+                    operationGuid = new Guid(dataBuff.Slice(2, 16));
                     Debug.Print("Received operation guid: " + operationGuid);
-                    connectionGuid = new Guid(dataBuff.Slice(17, 16));
-                    internalId = BitConverter.ToInt32(dataBuff, 33);
+                    connectionGuid = new Guid(dataBuff.Slice(18, 16));
+                    internalId = BitConverter.ToInt32(dataBuff, 34);
                 }
                 else
-                    internalId = BitConverter.ToInt32(dataBuff, 1);
+                    internalId = BitConverter.ToInt32(dataBuff, 2);
 
                 if (_internalPacketTbl.ContainsKey(internalId))
                 {
                     var packet = (IDataPacket) Activator.CreateInstance(_internalPacketTbl[internalId]);
-                    var ms = new MemoryStream(dataBuff) {Position = 1};
+                    var ms = new MemoryStream(dataBuff) {Position = 2};
                     packet.DeserializeFrom(ms);
 
                     if (packet is SynchronizePacket)
@@ -230,7 +234,7 @@ namespace uNet2.Channel
                 }
                 else if (ActiveSocketOperations.ContainsKey(operationGuid))
                 {
-                    using (var ms = new MemoryStream(dataBuff) {Position = 33})
+                    using (var ms = new MemoryStream(dataBuff) {Position = 34})
                     {
                         var packet = PacketProcessor.ParsePacket(ms);
                         packet.DeserializeFrom(ms);

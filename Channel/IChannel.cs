@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
 using uNet2.Packet;
+using uNet2.Security;
 using uNet2.SocketOperation;
 
 namespace uNet2.Channel
@@ -42,5 +43,7 @@ namespace uNet2.Channel
         bool IsProtected { get; set; }
         byte[] ChannelPublicKey { get; set; }
         IPacketProcessor PacketProcessor { get; set; }
+        bool EnsurePacketIntegrity { get; set; }
+        PacketIntegrityHash IntegrityHash { get; set; }
     }
 }

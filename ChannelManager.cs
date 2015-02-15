@@ -13,6 +13,7 @@ namespace uNet2
     /// </summary>
     public sealed class ChannelManager
     {
+        public HashSet<IChannel> AllChannels { get { return _channels; }}
         private readonly HashSet<IChannel> _channels;
         private int _idCounter, _peerIdCounter, _portCounter;
         private readonly object _channelLockObj;

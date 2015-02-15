@@ -48,7 +48,7 @@ namespace uNet2.Peer
         private readonly NetworkWriter _netWriter;
         private readonly NetworkReader _netReader;
         private readonly object _lockObj;
-        private IServerChannel _hostChannel;
+        internal IServerChannel HostChannel;
         internal bool IsDisposed;
 
         private readonly Dictionary<int, Type> _internalPacketTbl = new Dictionary<int,Type>
@@ -69,7 +69,7 @@ namespace uNet2.Peer
             _activeSequenceSessions = new Dictionary<Guid, SequenceSession>();
             _netWriter = new NetworkWriter();
             _lockObj = new object();
-            _hostChannel = hostChannel;
+            HostChannel = hostChannel;
             _netReader = new NetworkReader();
         }
 
@@ -82,7 +82,7 @@ namespace uNet2.Peer
             _activeSequenceSessions = new Dictionary<Guid, SequenceSession>();
             _netWriter = new NetworkWriter();
             _lockObj = new object();
-            _hostChannel = hostChannel;
+            HostChannel = hostChannel;
             _netReader = new NetworkReader();
         }
 
@@ -141,17 +141,17 @@ namespace uNet2.Peer
                 var connectionGuid = Guid.Empty;
                 if (isOperation)
                 {
-                    operationGuid = new Guid(dataBuff.Slice(1, 16));
-                    connectionGuid = new Guid(dataBuff.Slice(17, 16));
-                    internalId = BitConverter.ToInt32(dataBuff, 33);
+                    operationGuid = new Guid(dataBuff.Slice(2, 16));
+                    connectionGuid = new Guid(dataBuff.Slice(18, 16));
+                    internalId = BitConverter.ToInt32(dataBuff, 34);
                 }
                 else
-                    internalId = BitConverter.ToInt32(dataBuff, 1);
+                    internalId = BitConverter.ToInt32(dataBuff, 2);
 
                 if (_internalPacketTbl.ContainsKey(internalId))
                 {
                     var packet = (IDataPacket)Activator.CreateInstance(_internalPacketTbl[internalId]);
-                    var ms = new MemoryStream(dataBuff) {Position = 1};
+                    var ms = new MemoryStream(dataBuff) {Position = 2};
                     packet.DeserializeFrom(ms);
 
                     if (packet is SynchronizePacket)
@@ -165,14 +165,14 @@ namespace uNet2.Peer
                     else if (packet is SocketOperationRequest)
                         HandleSocketOperationPacket(packet as SocketOperationRequest);
                 }
-                else if (_hostChannel.ActiveSocketOperations.ContainsKey(operationGuid))
+                else if (HostChannel.ActiveSocketOperations.ContainsKey(operationGuid))
                 {
-                    using (var ms = new MemoryStream(dataBuff) { Position = 33 })
+                    using (var ms = new MemoryStream(dataBuff) { Position = 34 })
                     {
-                        var packet = _hostChannel.PacketProcessor.ParsePacket(ms);
+                        var packet = HostChannel.PacketProcessor.ParsePacket(ms);
                         packet.DeserializeFrom(ms);
-                        if(_hostChannel.ActiveSocketOperations[operationGuid].ConnectionGuid == connectionGuid)
-                            _hostChannel.ActiveSocketOperations[operationGuid].PacketReceived(packet, _hostChannel);
+                        if(HostChannel.ActiveSocketOperations[operationGuid].ConnectionGuid == connectionGuid)
+                            HostChannel.ActiveSocketOperations[operationGuid].PacketReceived(packet, HostChannel);
                     }
                 }
                 else
@@ -201,10 +201,10 @@ namespace uNet2.Peer
         {
             if (socketOperationRequest.Request == SocketOperationRequest.OperationRequest.Finish)
             {
-                if (!_hostChannel.ActiveSocketOperations.ContainsKey(socketOperationRequest.OperationGuid))
+                if (!HostChannel.ActiveSocketOperations.ContainsKey(socketOperationRequest.OperationGuid))
                     //TODO: real exception
                     Debug.Print("Could not locate socket operation");
-                _hostChannel.ActiveSocketOperations[socketOperationRequest.OperationGuid].Initialize();
+                HostChannel.ActiveSocketOperations[socketOperationRequest.OperationGuid].Initialize();
             }
         }
 
@@ -253,7 +253,7 @@ namespace uNet2.Peer
             var seqSession = _activeSequenceSessions[packet.SeqGuid];
             if (seqSession.IsOperation)
             {
-                _hostChannel.ActiveSocketOperations[seqSession.OperationGuid].SequenceFragmentReceived(
+                HostChannel.ActiveSocketOperations[seqSession.OperationGuid].SequenceFragmentReceived(
                     new SequenceFragmentInfo(packet.SeqGuid, seqSession.SessionStart,
                         seqSession.InitPacket.FullSequenceSize,
                         packet.SeqSize, seqSession.CurrentReceivedSize, seqSession.InitPacket.PartsCount, packet.SeqIdx));
@@ -283,7 +283,8 @@ namespace uNet2.Peer
                 seqSession.IsOperation = true;
                 seqSession.OperationGuid = packet.OperationGuid;
             }
-            _activeSequenceSessions.Add(packet.SequenceGuid, seqSession);
+            lock(_lockObj)
+                _activeSequenceSessions.Add(packet.SequenceGuid, seqSession);
         }
 
         private void HandleRelocationPacket(PeerRelocationRequestPacket packet)

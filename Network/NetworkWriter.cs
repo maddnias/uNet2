@@ -21,22 +21,42 @@ namespace uNet2.Network
             var ms = new MemoryStream();
             data.SerializeTo(ms);
 
-            var headerSize = 1 + (operationCtx != null ? 32 : 0);
+            sbyte integrityHashSize = 0;
+
+            if(senderChannel != null)
+                switch (senderChannel.IntegrityHash)
+                {
+                    case Security.PacketIntegrityHash.Sha256:
+                        integrityHashSize = 32;
+                        break;
+                    case Security.PacketIntegrityHash.Crc32:
+                        integrityHashSize = 4;
+                        break;
+                    case Security.PacketIntegrityHash.Elf32:
+                        integrityHashSize = 4;
+                        break;
+                }
+
+            var headerSize = 1 + (operationCtx != null ? 32 : 0) +
+                             (senderChannel != null && senderChannel.EnsurePacketIntegrity ? integrityHashSize+2 : 1);
             var sendBuff = new byte[ms.Length + headerSize +4];
             FastBuffer.MemCpy(BitConverter.GetBytes(headerSize + ms.Length), 0, sendBuff, 0, 4); 
             sendBuff[4] = operationCtx == null ? ((byte) 0x0) : ((byte) 0x1);
+            sendBuff[5] = senderChannel != null && senderChannel.EnsurePacketIntegrity ? (byte)0x1 : (byte)0x0;
+            if (senderChannel != null && senderChannel.EnsurePacketIntegrity)
+                sendBuff[6] = (byte) senderChannel.IntegrityHash;
 
             if (operationCtx != null)
             {
-                FastBuffer.MemCpy(operationCtx.OperationGuid.ToByteArray(), 0, sendBuff, 5, 16);
-                FastBuffer.MemCpy(guid.ToByteArray(), 0, sendBuff, 21, 16);
+                FastBuffer.MemCpy(operationCtx.OperationGuid.ToByteArray(), 0, sendBuff, 6, 16);
+                FastBuffer.MemCpy(guid.ToByteArray(), 0, sendBuff, 22, 16);
             }
 
             var tmpBuff = new byte[ms.Length];
             ms.Seek(0, SeekOrigin.Begin);
             ms.Read(tmpBuff,0,tmpBuff.Length);
 
-            FastBuffer.MemCpy(tmpBuff, 0, sendBuff, operationCtx != null ? 37 : 5, tmpBuff.Length);
+            FastBuffer.MemCpy(tmpBuff, 0, sendBuff, operationCtx != null ? 38 : 6, tmpBuff.Length);
 
             var sendObj = new Peer.Peer.SendObject {Channel = senderChannel, Packet = data};
             if (sock.Connected)

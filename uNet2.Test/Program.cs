@@ -8,6 +8,7 @@ using System.Threading;
 using uNet2.Channel;
 using uNet2.Packet;
 using uNet2.Packet.Events;
+using uNet2.Security;
 using uNet2.SocketOperation;
 
 namespace uNet2.Test
@@ -124,14 +125,13 @@ namespace uNet2.Test
     {
         static void Main(string[] args)
         {
-            Example1();
+            Example2();
         }
 
         // Simple example on how multiple channels can be handled
         public static void Example1()
         {
             var srv = new UNetServer();
-            Peer.Peer p = null;
 
             // Register global events across all channels
             srv.OnPeerConnected +=
@@ -168,19 +168,14 @@ namespace uNet2.Test
         public static void Example2()
         {
             var srv = new UNetServer();
-            var mainChannel = srv.CreateChannel<TcpServerChannel>(Activator.CreateInstance<StandardPacketProcessor>());
-            mainChannel.OnSequenceFragmentReceived += (sender, e) =>
-            {
-                float receivedPercentage = ((e.CurrentReceivedSize * 100f) / e.ExpectedCompleteSize);
-                double receiveSpeed =
-                    Math.Round((e.CurrentReceivedSize / (DateTime.Now - e.SessionStart).TotalSeconds) / 1048576, 2);
-                Console.WriteLine("Receiving file: {0}% @ {1} mb/s", receivedPercentage, receiveSpeed);
-            };
-            mainChannel.OnPacketReceived += (sender, e) =>
-            {
-                Console.Write(e.ToString());
-            };
+            var mainChannel = srv.CreateChannel<TcpServerChannel>(new StandardPacketProcessor());
+            mainChannel.EnsurePacketIntegrity = true;
+            mainChannel.IntegrityHash = PacketIntegrityHash.Sha256;
+
             srv.Initialize(mainChannel);
+            mainChannel.OnPeerConnected += (o, e) => {
+                mainChannel.Send(new PingPacket(), e.Peer.Identity.Guid);
+            };
 
             Console.ReadLine();
         }
@@ -245,6 +240,22 @@ namespace uNet2.Test
 
             srv.Initialize(mainChannel);
             srv.AddChannel(secondChannel);
+
+            Console.ReadLine();
+        }
+
+        public static void Example5()
+        {
+            var srv = new UNetServer();
+            var mainChannel = srv.CreateChannel<TcpServerChannel, StandardPacketProcessor>();
+            srv.Initialize(mainChannel);
+            //srv.GetMainChannel().EnsurePacketIntegrity = true;
+            //srv.GetMainChannel().IntegrityHash = PacketIntegrityHash.Sha256;
+
+            srv.OnPeerConnected += (e, o) =>
+            {
+                srv.GetMainChannel().Send(new PingPacket(), o.Peer.Identity.Guid);
+            };
 
             Console.ReadLine();
         }

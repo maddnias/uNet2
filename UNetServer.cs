@@ -52,6 +52,7 @@ namespace uNet2
             _channelMgr = new ChannelManager();
             mainChannel.IsMainChannel = true;
             _channelMgr.UnsafeAddChannel(mainChannel);
+            mainChannel.HostServer = this;
         }
 
         /// <summary>
@@ -82,6 +83,7 @@ namespace uNet2
             if (_channelMgr.GetChannel<IServerChannel>(ch => ch.IsMainChannel) != null)
                 return;
             mainChannel.IsMainChannel = true;
+            mainChannel.HostServer = this;
             _channelMgr.UnsafeAddChannel(mainChannel);
             _channelMgr.GetChannel<IServerChannel>(mainChannel.Id).Start();
             _channelMgr.GetChannel<IServerChannel>(mainChannel.Id).OnPeerConnected +=
@@ -160,6 +162,7 @@ namespace uNet2
             if (!_channelMgr.AddChannel(channel))
                 return false;
             OnChannelCreated.Raise(this, new ChannelEventArgs(channel));
+            channel.HostServer = this;
             channel.OnPeerConnected += (sender, e) => OnPeerConnected.Raise(this, e);
             channel.PacketProcessor = _channelMgr.GetMainChannel().PacketProcessor;
             return true;
@@ -187,6 +190,7 @@ namespace uNet2
             channelAction((T)channel);
             if (!_channelMgr.AddChannel(channel))
                 return false;
+            channel.HostServer = this;
             OnChannelCreated.Raise(this, new ChannelEventArgs(channel));
             channel.OnPeerConnected += OnPeerConnected;
             return true;

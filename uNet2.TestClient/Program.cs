@@ -141,7 +141,7 @@ namespace uNet2.TestClient
     {
         static void Main(string[] args)
         {
-            Example1();
+            Example2();
         }
 
         public static void Example1()
@@ -149,6 +149,8 @@ namespace uNet2.TestClient
             Thread.Sleep(2000);
 
             var client = new UNetClient(new StandardPacketProcessor());
+            client.EnsurePacketIntegrity = true;
+            client.PacketIntegrityHash = Security.PacketIntegrityHash.Sha256;
             client.Connect("127.0.0.1", 1000);
 
             Console.ReadLine();
@@ -159,9 +161,10 @@ namespace uNet2.TestClient
             Thread.Sleep(2000);
 
             var client = new UNetClient(new StandardPacketProcessor());
+            client.EnsurePacketIntegrity = true;
+            client.PacketIntegrityHash = Security.PacketIntegrityHash.Sha256;
             client.Connect("127.0.0.1", 1000);
-            var seqCtx = SequenceContext.CreateFromPacket(new TestPacket(), 8192);
-            client.SendSequence(seqCtx);
+
             Console.ReadLine();
         }
 
@@ -194,6 +197,18 @@ namespace uNet2.TestClient
 
 
             Console.ReadLine();
+        }
+
+        public static void Example5()
+        {
+            var client = new UNetClient(new StandardPacketProcessor());
+            Thread.Sleep(2000);
+            client.Connect("127.0.0.1", 1000);
+            client.OnPacketReceived += (o, e) =>
+            {
+                Console.WriteLine(e.Packet);
+            };
+
         }
     }
 }

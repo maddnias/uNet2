@@ -25,6 +25,7 @@ namespace uNet2.Channel
         byte[] ChannelPrivateKey { get; set; }
         List<PendingPeerConnection> PendingConnections { get; set; }
         int PendingConnectionTimeout { get; set; }
+        UNetServer HostServer { get; set; }
         /// <summary>
         /// Disconnects a peer from this channel
         /// </summary>

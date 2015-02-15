@@ -43,7 +43,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -51,8 +50,13 @@
     <Compile Include="Exceptions\Server\PeerNotFoundException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationNotInitializedException.cs" />
+    <Compile Include="Extensions\PeerExtensions.cs" />
     <Compile Include="Network\NetworkReader.cs" />
     <Compile Include="Packet\SocketOperationRequest.cs" />
+    <Compile Include="Security\CRC32Helper.cs" />
+    <Compile Include="Security\Elf32Helper.cs" />
+    <Compile Include="Security\SecurityEnums.cs" />
+    <Compile Include="Security\SHA256Helper.cs" />
     <Compile Include="SocketOperation\ISocketOperationHost.cs" />
     <Compile Include="Network\BufferObject.cs" />
     <Compile Include="ChannelManager.cs" />

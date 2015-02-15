@@ -12,6 +12,7 @@ using uNet2.Network;
 using uNet2.Packet;
 using uNet2.Packet.Events;
 using uNet2.Peer.Events;
+using uNet2.Security;
 using uNet2.SocketOperation;
 
 
@@ -69,6 +70,8 @@ namespace uNet2.Channel
         /// </summary>
         public ChannelManager Manager { get; set; }
         public int PendingConnectionTimeout { get; set; }
+        public bool EnsurePacketIntegrity { get; set; }
+        public PacketIntegrityHash IntegrityHash { get; set; }
 
         public bool IsProtected { get; set; }
         public byte[] ChannelPrivateKey { get; set; }
@@ -81,6 +84,7 @@ namespace uNet2.Channel
         public IPacketProcessor PacketProcessor { get; set; }
 
         public Dictionary<Guid, ISocketOperation> ActiveSocketOperations { get; set; }
+        public UNetServer HostServer { get; set; }
 
         private bool IsActive { get; set; }
         private bool IsDisposed { get; set; }
