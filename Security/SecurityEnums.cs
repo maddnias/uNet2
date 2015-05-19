@@ -7,8 +7,9 @@ namespace uNet2.Security
 {
     public enum PacketIntegrityHash : byte
     {
-        Sha256 = 0x0,
-        Crc32 = 0x1,
-        Elf32 = 0x2
+        None = 0x0,
+        Sha256 = 0x1,
+        Crc32 = 0x2,
+        Elf32 = 0x4
     }
 }

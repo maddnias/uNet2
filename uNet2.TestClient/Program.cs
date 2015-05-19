@@ -123,6 +123,12 @@ namespace uNet2.TestClient
             {2, typeof(FileTransferInitiatePacket)}
         };
 
+        public Dictionary<int, Type> PacketTable
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
+
         public byte[] ProcessRawData(byte[] rawData)
         {
             return rawData;

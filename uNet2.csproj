@@ -23,7 +23,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\build\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Events\ClientEventArgs.cs" />
+    <Compile Include="Events\ClientEvents.cs" />
     <Compile Include="Exceptions\Server\PeerNotFoundException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationException.cs" />
     <Compile Include="Exceptions\SocketOperation\SocketOperationNotInitializedException.cs" />

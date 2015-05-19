@@ -8,6 +8,7 @@ namespace uNet2.Packet
 {
     public interface IPacketProcessor
     {
+        Dictionary<int, Type> PacketTable { get; set; }
         /// <summary>
         /// This method is called when a raw packet is received from a peer.
         /// Use this method to decrypt/decompress a raw packet

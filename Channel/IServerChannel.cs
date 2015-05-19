@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using uNet2.Channel.Events;
 using uNet2.Packet;
 using uNet2.Packet.Events;
+using uNet2.Peer.Events;
 
 
 namespace uNet2.Channel
@@ -13,6 +14,8 @@ namespace uNet2.Channel
         /// This event is raised each time a peer connects to this channel
         /// </summary>
         event ChannelEvents.OnPeerConnected OnPeerConnected;
+
+        event ChannelEvents.OnPeerDisconnected OnPeerDisconnected;
         /// <summary>
         /// This event is raised each time a packet is received in this channel
         /// </summary>

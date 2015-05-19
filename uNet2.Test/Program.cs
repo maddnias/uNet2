@@ -58,6 +58,12 @@ namespace uNet2.Test
             {2, typeof(FileTransferInitiatePacket)}
         };
 
+        public Dictionary<int, Type> PacketTable
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
+
         public byte[] ProcessRawData(byte[] rawData)
         {
             return rawData;
@@ -189,23 +195,23 @@ namespace uNet2.Test
             var secondChannel = srv.CreateChannel<TcpServerChannel>();
             
 
-            mainChannel.OnPeerConnected += (sender, e) =>
-            {
-                _operations.Add(mainChannel.RegisterOperation<FileTransferOperation>(e.Peer.Identity.Guid));
-                srv.AddPeerToChannel(secondChannel, p => p.Identity.Guid == e.Peer.Identity.Guid);
-                count++;
-                Console.WriteLine("Main channel connect");
-            };
-            secondChannel.OnPeerConnected += (sender, e) =>
-            {
-                _operations.Add(secondChannel.RegisterOperation<FileTransferOperation>(e.Peer.Identity.Guid));
-                count++;
-                Console.WriteLine("second channel connect");
-            };
-            secondChannel.OnPacketReceived += (sender, e) =>
-            {
-                Console.WriteLine("Received pingpacket from peer: {0} @ channel {1}", e.Peer.Identity.Guid, e.Channel.Id);
-            };
+            //mainChannel.OnPeerConnected += (sender, e) =>
+            //{
+            //    _operations.Add(mainChannel.RegisterOperation<FileTransferOperation>(e.Peer.Identity.Guid));
+            //    srv.AddPeerToChannel(secondChannel, p => p.Identity.Guid == e.Peer.Identity.Guid);
+            //    count++;
+            //    Console.WriteLine("Main channel connect");
+            //};
+            //secondChannel.OnPeerConnected += (sender, e) =>
+            //{
+            //    _operations.Add(secondChannel.RegisterOperation<FileTransferOperation>(e.Peer.Identity.Guid));
+            //    count++;
+            //    Console.WriteLine("second channel connect");
+            //};
+            //secondChannel.OnPacketReceived += (sender, e) =>
+            //{
+            //    Console.WriteLine("Received pingpacket from peer: {0} @ channel {1}", e.Peer.Identity.Guid, e.Channel.Id);
+            //};
 
             srv.Initialize(mainChannel);
             srv.AddChannel(secondChannel);

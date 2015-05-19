@@ -11,7 +11,8 @@ namespace uNet2.Packet
         public enum OperationRequest : byte
         {
             Create = 0x0,
-            Finish = 0x1
+            Finish = 0x1,
+            Close = 0x2
         }
 
         public OperationRequest Request { get; set; }

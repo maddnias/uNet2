@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using uNet2.Channel;
@@ -34,6 +35,7 @@ namespace uNet2.Peer
         internal PacketEvents.OnRawServerPacketReceived OnRawPacketReceived;
         internal PacketEvents.OnPacketSent OnPacketSent;
 
+        public IPEndPoint Endpoint { get; set; } 
         public SocketIdentity Identity { get; set; }
         /// <summary>
         /// The delay between the peer and client last check
@@ -71,6 +73,7 @@ namespace uNet2.Peer
             _lockObj = new object();
             HostChannel = hostChannel;
             _netReader = new NetworkReader();
+            Endpoint = (IPEndPoint)_sock.RemoteEndPoint;
         }
 
         public Peer(int id, Socket sock, uint bufferSize, Guid guid, IServerChannel hostChannel)
@@ -84,6 +87,7 @@ namespace uNet2.Peer
             _lockObj = new object();
             HostChannel = hostChannel;
             _netReader = new NetworkReader();
+            Endpoint = (IPEndPoint)_sock.RemoteEndPoint;
         }
 
         /// <summary>
@@ -169,10 +173,16 @@ namespace uNet2.Peer
                 {
                     using (var ms = new MemoryStream(dataBuff) { Position = 34 })
                     {
-                        var packet = HostChannel.PacketProcessor.ParsePacket(ms);
+                        var packet = HostChannel.PacketProcessor.ParsePacket(ms); 
+                        ms.Position -= 4;
                         packet.DeserializeFrom(ms);
-                        if(HostChannel.ActiveSocketOperations[operationGuid].ConnectionGuid == connectionGuid)
+                        if (HostChannel.ActiveSocketOperations[operationGuid].ConnectionGuid == connectionGuid)
+                        {
                             HostChannel.ActiveSocketOperations[operationGuid].PacketReceived(packet, HostChannel);
+                            HostChannel.ActiveSocketOperations[operationGuid].OnPacketReceived.Raise(this,
+                                new OperationPacketEventArgs(packet, HostChannel, 0,
+                                    HostChannel.ActiveSocketOperations[operationGuid]));
+                        }
                     }
                 }
                 else

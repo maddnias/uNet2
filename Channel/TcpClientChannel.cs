@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using uNet2.Events;
 using uNet2.Extensions;
 using uNet2.Network;
 using uNet2.Packet;
@@ -109,12 +110,25 @@ namespace uNet2.Channel
             ChannelSocket.BeginConnect(addr, port, ConnectCallback, null);
             _synchronizeHandle.WaitOne();
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            return ChannelSocket.Connected && Client.Identity.Guid != null;
+            if (ChannelSocket.Connected && Client.Identity.Guid != null)
+            {
+                Client.OnClientConnected.Raise(this, new ClientEventArgs(this.Client, this));
+                return true;
+            }
+            return false;
         }
 
         private void ConnectCallback(IAsyncResult res)
         {
-            ChannelSocket.EndConnect(res);
+            try
+            {
+                ChannelSocket.EndConnect(res);
+            }
+            catch
+            {
+                _synchronizeHandle.Set();
+                return;
+            }
             Receive();
 
             var syncPacket = new SynchronizePacket()
@@ -272,6 +286,10 @@ namespace uNet2.Channel
                 };
                 Send(operationRequest);
                 Debug.Print("New SocketOperation created with GUID: " + socketOperationRequest.OperationGuid);
+            } 
+            else if (socketOperationRequest.Request == SocketOperationRequest.OperationRequest.Close)
+            {
+                ActiveSocketOperations.Remove(socketOperationRequest.OperationGuid);
             }
         }
 
@@ -298,9 +316,10 @@ namespace uNet2.Channel
         private void RawPacketReceived(byte[] data)
         {
             IDataPacket parsedPacket;
-            using (var ms = new MemoryStream(data) { Position = 1})
+            using (var ms = new MemoryStream(data) { Position = 2})
             {
                 parsedPacket = PacketProcessor.ParsePacket(ms);
+                parsedPacket.DeserializeFrom(ms);
             }
             OnPacketReceived.Raise(this, new ClientPacketEventArgs(parsedPacket, this, data.Length));
         }
@@ -344,6 +363,13 @@ namespace uNet2.Channel
             _activeSequenceSessions.Add(packet.SequenceGuid, new List<ISequencePacket>());
         }
 
+        public ISocketOperation CreateOperation(Type t)
+        {
+            var operation = (ISocketOperation)Activator.CreateInstance(t);
+            operation.HostChannel = this;
+            return operation;
+        }
+
         public T CreateOperation<T>() where T : ISocketOperation
         {
             var operation = (ISocketOperation)Activator.CreateInstance<T>();
@@ -351,7 +377,7 @@ namespace uNet2.Channel
             return (T)operation;
         }
 
-        public T RegisterOperation<T>(Guid connectionGuid) where T : ISocketOperation
+        public T CreateOperation<T>(Guid connectionGuid) where T : ISocketOperation
         {
             throw new NotImplementedException();
         }

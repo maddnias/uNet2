@@ -7,6 +7,7 @@ namespace uNet2.Packet.Events
 {
     public static class PacketEvents
     {
+        public delegate void OnOperationPacketReceived(object sender, OperationPacketEventArgs e);
         public delegate void OnServerPacketReceived(object sender, ServerPacketEventArgs e);
         public delegate void OnClientPacketReceived(object sender, ClientPacketEventArgs e);
         public delegate void OnSequenceFragmentReceived(object sender, SequenceEventArgs e);
@@ -14,6 +15,12 @@ namespace uNet2.Packet.Events
         internal delegate void OnRawServerPacketReceived(object sender, RawServerPacketEventArgs e);
 
         public delegate void OnRawClientPacketReceived(object sender, RawClientPacketEventArgs e);
+
+        internal static void Raise(this OnOperationPacketReceived @event, object sender, OperationPacketEventArgs e)
+        {
+            if (@event != null)
+                @event(sender, e);
+        }
 
         internal static void Raise(this OnRawServerPacketReceived @event, object sender, RawServerPacketEventArgs e)
         {

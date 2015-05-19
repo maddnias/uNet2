@@ -28,6 +28,8 @@ namespace uNet2.Channel
         /// This event is raised each time a peer connects to this channel
         /// </summary>
         public event ChannelEvents.OnPeerConnected OnPeerConnected;
+        public event ChannelEvents.OnPeerDisconnected OnPeerDisconnected;
+
         /// <summary>
         /// This event is raised each time a packet is received from a peer in this channel
         /// </summary>
@@ -227,6 +229,10 @@ namespace uNet2.Channel
             if (IsMainChannel)
             {
                 newPeer = new Peer.Peer(new SocketIdentity(Manager.GeneratePeerId(), SocketIdentity.GenerateGuid()), newSock, BufferSize, this);
+                newPeer.OnPeerDisconnected += (o, e2) =>
+                {
+                    OnPeerDisconnected.Raise(o, new ChannelEventArgs(this, newPeer));
+                };
                 newPeer.Receive();
                 AcceptPeer(newPeer);
             }
@@ -234,6 +240,10 @@ namespace uNet2.Channel
             {
                 newPeer = new Peer.Peer(new SocketIdentity(Manager.GeneratePeerId()), newSock, BufferSize, this);
                 PendingConnections.Add(new PendingPeerConnection(newPeer.Identity.Guid, newPeer));
+                newPeer.OnPeerDisconnected += (o, e2) =>
+                {
+                    OnPeerDisconnected.Raise(o, new ChannelEventArgs(this, newPeer));
+                };
                 newPeer.Receive();
                 newPeer.OnPeerRelocationRequest += (sender, e) =>
                 {
@@ -241,6 +251,7 @@ namespace uNet2.Channel
                     {
                         AcceptPeer(newPeer);
                         OnPeerConnected.Raise(this, new ChannelEventArgs(this, e.Peer));
+       
                         lock (_lockObj)
                             PendingConnections.Remove(PendingConnections.First(pc => pc.Guid == e.PeerGuid));
                     }
@@ -271,9 +282,10 @@ namespace uNet2.Channel
             IDataPacket parsedPacket;
             var rawDat = e.RawData;
             rawDat = PacketProcessor.ProcessRawData(rawDat);
-            using (var ms = new MemoryStream(rawDat) { Position = 1})
+            using (var ms = new MemoryStream(rawDat) { Position = 2})
             {
                 parsedPacket = PacketProcessor.ParsePacket(ms);
+                parsedPacket.DeserializeFrom(ms);
             }
             OnPacketReceived.Raise(this, new ServerPacketEventArgs(parsedPacket, e.Peer, this, e.RawData.Length));
         }
@@ -293,6 +305,11 @@ namespace uNet2.Channel
 
         #endregion
 
+        public ISocketOperation CreateOperation(Type t)
+        {
+            throw new NotImplementedException();
+        }
+
         public T CreateOperation<T>() where T : ISocketOperation
         {
             var operation = (ISocketOperation)Activator.CreateInstance<T>();
@@ -300,7 +317,7 @@ namespace uNet2.Channel
             return (T)operation;
         }
 
-        public T RegisterOperation<T>(Guid connectionGuid) where T : ISocketOperation
+        public T CreateOperation<T>(Guid connectionGuid) where T : ISocketOperation
         {
             var operation = CreateOperation<T>();
             operation.ConnectionGuid = connectionGuid;
@@ -336,6 +353,13 @@ namespace uNet2.Channel
         {
             if (!ActiveSocketOperations.ContainsKey(operation.OperationGuid))
                 return;
+            var operationRequest = new SocketOperationRequest
+            {
+                OperationGuid = operation.OperationGuid,
+                Request = SocketOperationRequest.OperationRequest.Close,
+                OperationId = operation.OperationId
+            };
+            Send(operationRequest, operation.ConnectionGuid);
             lock (_lockObj)
                 ActiveSocketOperations.Remove(operation.OperationGuid);
             Debug.Print("Closed operation with GUID: " + operation.OperationGuid);
@@ -345,6 +369,13 @@ namespace uNet2.Channel
         {
             if (!ActiveSocketOperations.ContainsKey(operationGuid))
                 return;
+            var operationRequest = new SocketOperationRequest
+            {
+                OperationGuid = operationGuid,
+                Request = SocketOperationRequest.OperationRequest.Close,
+                OperationId = ActiveSocketOperations[operationGuid].OperationId
+            };
+            Send(operationRequest, operationGuid);
             lock (_lockObj)
                 ActiveSocketOperations.Remove(operationGuid);
             Debug.Print("Closed operation with GUID: " + operationGuid);

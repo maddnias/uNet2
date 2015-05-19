@@ -3,11 +3,14 @@ using uNet2.Channel;
 using uNet2.Exceptions.SocketOperation;
 using uNet2.Network;
 using uNet2.Packet;
+using uNet2.Packet.Events;
 
 namespace uNet2.SocketOperation
 {
     public abstract class SocketOperationBase : ISocketOperation
     {
+        public PacketEvents.OnOperationPacketReceived OnPacketReceived { get; set; }
+
         public abstract int OperationId { get; }
         public Guid OperationGuid { get; set; }
         public Guid ConnectionGuid { get; set; }

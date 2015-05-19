@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using uNet2.Channel;
+using uNet2.Events;
 using uNet2.Network;
 using uNet2.Packet;
 using uNet2.Packet.Events;
@@ -12,7 +13,8 @@ namespace uNet2
 {
     public sealed class UNetClient
     {
-        public event PacketEvents.OnClientPacketReceived OnPacketReceived;
+        public PacketEvents.OnClientPacketReceived OnPacketReceived;
+        public ClientEvents.OnClientConnected OnClientConnected;
 
         public SocketIdentity Identity { get; set; }
         public IPacketProcessor PacketProcessor { get; set; }
@@ -109,6 +111,17 @@ namespace uNet2
             ActiveChannels.ForEach(ch =>
             {
                 var operation = ch.CreateOperation<T>();
+                ch.OperationTable.Add(operation.OperationId, operation.GetType());
+            });
+        }
+
+        public void RegisterOperation(Type t)
+        {
+            var socketOperation = Activator.CreateInstance(t) as ISocketOperation;
+            _operationTable.Add(socketOperation.OperationId, socketOperation);
+            ActiveChannels.ForEach(ch =>
+            {
+                var operation = ch.CreateOperation(t);
                 ch.OperationTable.Add(operation.OperationId, operation.GetType());
             });
         }

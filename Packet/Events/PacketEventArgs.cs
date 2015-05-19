@@ -3,9 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using uNet2.Channel;
+using uNet2.SocketOperation;
 
 namespace uNet2.Packet.Events
 {
+    public class OperationPacketEventArgs : EventArgs
+    {
+        public IDataPacket Packet { get; set; }
+        public IChannel Channel { get; set; }
+        public ISocketOperation Operation { get; set; }
+        public int RawSize { get; set; }
+
+        public OperationPacketEventArgs(IDataPacket packet, IChannel channel, int rawSize, ISocketOperation operation)
+        {
+            Packet = packet;
+            Channel = channel;
+            RawSize = rawSize;
+            Operation = operation;
+        }
+    }
+
     public class ServerPacketEventArgs : EventArgs
     {
         public IDataPacket Packet { get; set; }

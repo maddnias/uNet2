@@ -10,7 +10,7 @@ namespace uNet2.Peer.Events
         internal delegate void OnPeerConnected(object sender, PeerEventArgs e);
         internal delegate void OnPeerDataReceived(object sender, PeerEventArgs e);
         internal delegate void OnPeerSynchronized(object sender, PeerEventArgs e);
-        internal delegate void OnPeerDisconnected(object sender, PeerEventArgs e);
+        public delegate void OnPeerDisconnected(object sender, PeerEventArgs e);
         internal delegate void OnSocketOperationCreated(object sender, PeerEventArgs e);
         internal delegate void OnPeerRelocationRequest(object sender, PeerRelocationEventArgs e);
 
